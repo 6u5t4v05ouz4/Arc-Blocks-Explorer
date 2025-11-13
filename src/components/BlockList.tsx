@@ -1,131 +1,107 @@
-import { useState, useEffect } from 'react'
-import { useMainPageBlocks, useBlocksByHeights } from '../hooks/useBlocks'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
+import { useMainPageBlocks, useBlockByHeight } from '../hooks/useBlocks'
 import BlockCard from './BlockCard'
-import BlockNavigation from './BlockNavigation'
-import BlockDetails from './BlockDetails'
-import LoadingSpinner from './LoadingSpinner'
 import ErrorDisplay from './ErrorDisplay'
 import BlockCardSkeleton from './BlockCardSkeleton'
-import { BLOCKS_TO_SHOW } from '../utils/constants'
+import type { Block } from '../types/block'
+
+const MAX_OLD_CARDS = 8 // Limite de cards antigos para performance
 
 export default function BlockList() {
   const { data: mainBlocks, isLoading: isLoadingMain } = useMainPageBlocks()
   const [currentBlockHeight, setCurrentBlockHeight] = useState<number | null>(null)
-  const [selectedBlockHeight, setSelectedBlockHeight] = useState<number | null>(null)
-  const [isAutoMode, setIsAutoMode] = useState(true) // Modo automático (segue o mais recente)
+  const [oldBlocksCache, setOldBlocksCache] = useState<Map<number, Block>>(new Map())
+  const [isAutoMode, setIsAutoMode] = useState(true)
+  const previousBlockRef = useRef<Block | null>(null)
 
   // Define o bloco atual quando os dados principais carregam
   useEffect(() => {
     if (mainBlocks && mainBlocks.length > 0) {
+      const latestHeight = mainBlocks[0].height
       if (currentBlockHeight === null) {
-        // Primeira carga
-        setCurrentBlockHeight(mainBlocks[0].height)
+        setCurrentBlockHeight(latestHeight)
         setIsAutoMode(true)
       } else if (isAutoMode) {
-        // Se está em modo automático, atualiza para o bloco mais recente
-        const latestHeight = mainBlocks[0].height
         if (latestHeight > currentBlockHeight) {
+          // Quando um novo bloco é detectado, salva o bloco anterior no cache
+          if (previousBlockRef.current) {
+            setOldBlocksCache(prev => {
+              const newCache = new Map(prev)
+              // Adiciona o bloco anterior ao cache
+              newCache.set(previousBlockRef.current!.height, previousBlockRef.current!)
+              
+              // Remove blocos antigos demais para manter apenas MAX_OLD_CARDS
+              if (newCache.size > MAX_OLD_CARDS) {
+                const heights = Array.from(newCache.keys()).sort((a, b) => b - a)
+                const toRemove = heights.slice(MAX_OLD_CARDS)
+                toRemove.forEach(height => newCache.delete(height))
+              }
+              
+              return newCache
+            })
+          }
           setCurrentBlockHeight(latestHeight)
         }
       }
     }
   }, [mainBlocks, currentBlockHeight, isAutoMode])
 
-  // Calcula os blocos anteriores e posteriores
-  const blockHeights: number[] = []
-  if (currentBlockHeight !== null) {
-    // 3 blocos anteriores
-    for (let i = BLOCKS_TO_SHOW.BEFORE; i > 0; i--) {
-      const height = currentBlockHeight - i
-      if (height > 0) {
-        blockHeights.push(height)
-      }
-    }
-    // Bloco atual
-    blockHeights.push(currentBlockHeight)
-    // 3 blocos posteriores
-    for (let i = 1; i <= BLOCKS_TO_SHOW.AFTER; i++) {
-      blockHeights.push(currentBlockHeight + i)
-    }
-  }
-
-  const { data: blocks, isLoading: isLoadingBlocks, error: blocksError, refetch: refetchBlocks } = useBlocksByHeights(
-    blockHeights
+  // Busca o bloco atual
+  const { data: currentBlock, isLoading: isLoadingCurrent, error: currentError, refetch: refetchCurrent } = useBlockByHeight(
+    currentBlockHeight
   )
 
-  // Ordena os blocos por altura (mais recente primeiro)
-  const sortedBlocks = blocks
-    ? [...blocks].sort((a, b) => b.height - a.height)
-    : []
-
-  const handleBlockClick = (height: number) => {
-    setSelectedBlockHeight(height)
-  }
-
-  const handleNavigate = (direction: 'prev' | 'next' | 'latest') => {
-    if (direction === 'latest' && mainBlocks && mainBlocks.length > 0) {
-      setCurrentBlockHeight(mainBlocks[0].height)
-      setIsAutoMode(true) // Volta ao modo automático
-    } else if (direction === 'prev' && currentBlockHeight !== null) {
-      setCurrentBlockHeight(currentBlockHeight - 1)
-      setIsAutoMode(false) // Desativa modo automático ao navegar manualmente
-    } else if (direction === 'next' && currentBlockHeight !== null) {
-      setCurrentBlockHeight(currentBlockHeight + 1)
-      setIsAutoMode(false) // Desativa modo automático ao navegar manualmente
+  // Mantém referência do bloco atual para usar quando um novo aparecer
+  useEffect(() => {
+    if (currentBlock) {
+      previousBlockRef.current = currentBlock
     }
-  }
+  }, [currentBlock])
 
-  const handleSearch = (height: number) => {
-    setCurrentBlockHeight(height)
-    setIsAutoMode(false) // Desativa modo automático ao buscar manualmente
-  }
+  // Converte o cache para array ordenado (mais recente primeiro)
+  const oldBlocksArray = useMemo(() => {
+    return Array.from(oldBlocksCache.values())
+      .sort((a, b) => b.height - a.height)
+      .slice(0, MAX_OLD_CARDS)
+  }, [oldBlocksCache])
 
-  if (blocksError) {
+  if (currentError) {
     return (
       <div className="space-y-6">
-        <BlockNavigation
-          currentHeight={currentBlockHeight}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          isAutoMode={isAutoMode}
-        />
         <ErrorDisplay 
-          message="Error loading blocks. Check your connection and try again."
-          onRetry={() => refetchBlocks()}
+          message="Error loading current block. Check your connection and try again."
+          onRetry={() => refetchCurrent()}
         />
       </div>
     )
   }
 
-  if (isLoadingMain || isLoadingBlocks) {
+  if (isLoadingMain || (isLoadingCurrent && currentBlockHeight !== null)) {
     return (
       <div className="space-y-6">
-        <BlockNavigation
-          currentHeight={currentBlockHeight}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          isAutoMode={isAutoMode}
-        />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
-          {Array.from({ length: 7 }).map((_, i) => (
-            <BlockCardSkeleton key={i} />
-          ))}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Current block skeleton */}
+          <div className="lg:col-span-1">
+            <BlockCardSkeleton />
+          </div>
+          {/* Old blocks skeleton */}
+          <div className="lg:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <BlockCardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     )
   }
 
-  if (!blocks || blocks.length === 0) {
+  if (!currentBlock && currentBlockHeight !== null) {
     return (
       <div className="space-y-6">
-        <BlockNavigation
-          currentHeight={currentBlockHeight}
-          onNavigate={handleNavigate}
-          onSearch={handleSearch}
-          isAutoMode={isAutoMode}
-        />
         <div className="text-center py-12">
-          <p className="text-gray-400">No blocks found</p>
+          <p className="text-gray-400">Block #{currentBlockHeight} not found</p>
         </div>
       </div>
     )
@@ -133,39 +109,90 @@ export default function BlockList() {
 
   return (
     <div className="space-y-6">
-      <BlockNavigation
-        currentHeight={currentBlockHeight}
-        onNavigate={handleNavigate}
-        onSearch={(height) => setCurrentBlockHeight(height)}
-      />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
-        {sortedBlocks.map((block, index) => (
-          <div
-            key={block.height}
-            className="animate-fadeIn"
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            <BlockCard
-              block={block}
-              isCurrent={block.height === currentBlockHeight}
-              onClick={() => handleBlockClick(block.height)}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Current Block - Left Side */}
+        <div className="lg:col-span-1">
+          {currentBlock && (
+            <MemoizedBlockCard
+              block={currentBlock}
+              isCurrent={true}
+              openInNewTab={true}
             />
-          </div>
-        ))}
-      </div>
+          )}
+        </div>
 
-      {selectedBlockHeight && (
-        <BlockDetails
-          height={selectedBlockHeight}
-          onClose={() => setSelectedBlockHeight(null)}
-          onNavigate={(height) => {
-            setSelectedBlockHeight(height)
-            setCurrentBlockHeight(height)
-          }}
-        />
-      )}
+        {/* Old Blocks - Right Side */}
+        <div className="lg:col-span-2">
+          {oldBlocksArray.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {oldBlocksArray.map((block, index) => (
+                <MemoizedOldBlockCard 
+                  key={block.height} 
+                  block={block}
+                  index={index}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-8 text-center">
+              <p className="text-gray-400">No previous blocks to display</p>
+              <p className="text-sm text-gray-500 mt-2">Previous blocks will appear here as new blocks are mined</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
 
+// Componente memoizado para o card atual
+const MemoizedBlockCard = React.memo(function MemoizedBlockCard({ 
+  block, 
+  isCurrent, 
+  openInNewTab 
+}: { 
+  block: Block
+  isCurrent: boolean
+  openInNewTab: boolean 
+}) {
+  return (
+    <div className="animate-fadeIn">
+      <BlockCard
+        block={block}
+        isCurrent={isCurrent}
+        openInNewTab={openInNewTab}
+      />
+    </div>
+  )
+}, (prevProps, nextProps) => {
+  // Só re-renderiza se o bloco realmente mudou (altura ou hash diferente)
+  return prevProps.block.height === nextProps.block.height &&
+         prevProps.block.hash === nextProps.block.hash
+})
+
+// Componente memoizado para cards antigos - NÃO re-renderiza quando novos blocos aparecem
+const MemoizedOldBlockCard = React.memo(function MemoizedOldBlockCard({ 
+  block, 
+  index 
+}: { 
+  block: Block
+  index: number 
+}) {
+  return (
+    <div
+      className="animate-fadeIn"
+      style={{ animationDelay: `${index * 50}ms` }}
+    >
+      <BlockCard
+        block={block}
+        isCurrent={false}
+        openInNewTab={true}
+      />
+    </div>
+  )
+}, (prevProps, nextProps) => {
+  // Comparação customizada: só re-renderiza se o bloco realmente mudou
+  // Como os blocos antigos não mudam, isso sempre retorna true (não re-renderiza)
+  return prevProps.block.height === nextProps.block.height &&
+         prevProps.block.hash === nextProps.block.hash
+})

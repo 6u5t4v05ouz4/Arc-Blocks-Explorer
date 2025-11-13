@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Header from './components/Header'
 import BlockList from './components/BlockList'
 import TerminalView from './components/TerminalView'
 import ModeSelector from './components/ModeSelector'
+import BlockDetailsPage from './pages/BlockDetailsPage'
 import { BlockProvider, useBlockContext } from './contexts/BlockContext'
 
 const queryClient = new QueryClient({
@@ -32,27 +34,27 @@ function AppContent() {
           />
         </div>
           
-          {viewMode === 'terminal' ? (
-            <TerminalView />
-          ) : (
-            // Modo Cards comentado/desabilitado para não sobrecarregar
-            // <BlockList />
-            <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-8 text-center">
-              <p className="text-gray-400 mb-4">Cards mode is disabled for better performance.</p>
-              <p className="text-sm text-gray-500">Use Terminal mode for fast and efficient visualization.</p>
-            </div>
-          )}
-        </main>
-      </div>
+        {viewMode === 'terminal' ? (
+          <TerminalView />
+        ) : (
+          <BlockList />
+        )}
+      </main>
+    </div>
   )
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BlockProvider>
-        <AppContent />
-      </BlockProvider>
+      <BrowserRouter>
+        <BlockProvider>
+          <Routes>
+            <Route path="/" element={<AppContent />} />
+            <Route path="/block/:height" element={<BlockDetailsPage />} />
+          </Routes>
+        </BlockProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   )
 }

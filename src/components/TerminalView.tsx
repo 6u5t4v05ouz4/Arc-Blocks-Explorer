@@ -85,11 +85,6 @@ export default function TerminalView() {
   // Para modo manual, busca os blocos necessários
   const manualBlocksQuery = useBlockByHeight(!isAutoMode && currentBlockHeight ? currentBlockHeight : null)
 
-  const handleSearch = (height: number) => {
-    setCurrentBlockHeight(height)
-    setIsAutoMode(false)
-  }
-
   // Mostra loading apenas na primeira carga
   if (isLoadingMain && blocksList.length === 0) {
     return (

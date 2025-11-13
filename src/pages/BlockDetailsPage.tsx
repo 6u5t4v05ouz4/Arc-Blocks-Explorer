@@ -1,61 +1,59 @@
+import { useParams } from 'react-router-dom'
 import { useBlockDetails } from '../hooks/useBlockDetails'
-import LoadingSpinner from './LoadingSpinner'
+import LoadingSpinner from '../components/LoadingSpinner'
+import ErrorDisplay from '../components/ErrorDisplay'
 import { formatTimestamp, formatNumber, formatGasPercentage, weiToEth, formatEth } from '../utils/formatters'
 
-interface BlockDetailsProps {
-  height: number
-  onClose: () => void
-  onNavigate: (height: number) => void
-}
-
-export default function BlockDetails({ height, onClose, onNavigate }: BlockDetailsProps) {
-  const { data: block, isLoading } = useBlockDetails(height)
+export default function BlockDetailsPage() {
+  const { height } = useParams<{ height: string }>()
+  const blockHeight = height ? parseInt(height, 10) : null
+  const { data: block, isLoading, error, refetch } = useBlockDetails(blockHeight || 0)
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" onClick={onClose}>
-        <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-8 max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
-          <LoadingSpinner />
-        </div>
+      <div className="min-h-screen bg-arc-dark text-white flex items-center justify-center">
+        <LoadingSpinner />
       </div>
     )
   }
 
-  if (!block) {
+  if (error || !block) {
     return (
-      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50" onClick={onClose}>
-        <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-8 max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
-          <p className="text-red-400">Error loading block details</p>
-        </div>
+      <div className="min-h-screen bg-arc-dark text-white flex items-center justify-center">
+        <ErrorDisplay 
+          message="Error loading block details. The block may not exist." 
+          onRetry={() => refetch()} 
+        />
       </div>
     )
   }
+
+  const gasUsageColor = block.gas_used_percentage > 80 
+    ? 'text-red-400' 
+    : block.gas_used_percentage > 50 
+    ? 'text-yellow-400' 
+    : 'text-green-400'
 
   return (
-    <div 
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 animate-fadeIn"
-      onClick={onClose}
-    >
-      <div 
-        className="bg-arc-gray border border-arc-gray-light rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-slideUp"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="sticky top-0 bg-arc-gray border-b border-arc-gray-light p-6 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-white">
-            Block #{block.height}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white text-2xl font-bold"
+    <div className="min-h-screen bg-arc-dark text-white">
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <a 
+            href="/" 
+            className="text-arc-primary hover:text-arc-primary/80 transition-colors"
           >
-            ×
-          </button>
+            ← Back to Explorer
+          </a>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-8">
+          <h1 className="text-4xl font-bold text-white mb-8">
+            Block #{block.height}
+          </h1>
+
           {/* Basic Information */}
-          <section>
-            <h3 className="text-lg font-semibold text-white mb-4">Basic Information</h3>
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-white mb-4">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-arc-gray-light p-4 rounded-lg">
                 <div className="text-gray-400 text-sm mb-1">Hash</div>
@@ -85,8 +83,8 @@ export default function BlockDetails({ height, onClose, onNavigate }: BlockDetai
           </section>
 
           {/* Miner */}
-          <section>
-            <h3 className="text-lg font-semibold text-white mb-4">Miner</h3>
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-white mb-4">Miner</h2>
             <div className="bg-arc-gray-light p-4 rounded-lg">
               <div className="text-gray-400 text-sm mb-1">Address</div>
               <div className="text-white font-mono text-sm break-all">{block.miner.hash}</div>
@@ -94,13 +92,15 @@ export default function BlockDetails({ height, onClose, onNavigate }: BlockDetai
           </section>
 
           {/* Gas Statistics */}
-          <section>
-            <h3 className="text-lg font-semibold text-white mb-4">Gas Statistics</h3>
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-white mb-4">Gas Statistics</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-arc-gray-light p-4 rounded-lg">
                 <div className="text-gray-400 text-sm mb-1">Gas Used</div>
                 <div className="text-white font-semibold">{formatNumber(block.gas_used)}</div>
-                <div className="text-gray-500 text-xs mt-1">{formatGasPercentage(block.gas_used_percentage)}</div>
+                <div className={`text-xs mt-1 ${gasUsageColor}`}>
+                  {formatGasPercentage(block.gas_used_percentage)}
+                </div>
               </div>
               <div className="bg-arc-gray-light p-4 rounded-lg">
                 <div className="text-gray-400 text-sm mb-1">Gas Limit</div>
@@ -118,8 +118,8 @@ export default function BlockDetails({ height, onClose, onNavigate }: BlockDetai
           </section>
 
           {/* Fees */}
-          <section>
-            <h3 className="text-lg font-semibold text-white mb-4">Fees</h3>
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-white mb-4">Fees</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-arc-gray-light p-4 rounded-lg">
                 <div className="text-gray-400 text-sm mb-1">Transaction Fees</div>
@@ -143,18 +143,18 @@ export default function BlockDetails({ height, onClose, onNavigate }: BlockDetai
 
           {/* Navigation */}
           <div className="flex gap-2 pt-4 border-t border-arc-gray-light">
-            <button
-              onClick={() => onNavigate(block.height - 1)}
+            <a
+              href={`/block/${block.height - 1}`}
               className="px-4 py-2 bg-arc-gray-light hover:bg-arc-gray text-white rounded-lg transition-colors"
             >
               ← Previous Block
-            </button>
-            <button
-              onClick={() => onNavigate(block.height + 1)}
+            </a>
+            <a
+              href={`/block/${block.height + 1}`}
               className="px-4 py-2 bg-arc-gray-light hover:bg-arc-gray text-white rounded-lg transition-colors"
             >
               Next Block →
-            </button>
+            </a>
           </div>
         </div>
       </div>

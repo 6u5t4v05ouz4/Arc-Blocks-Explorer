@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useMainPageBlocks } from './useBlocks'
-import type { Block } from '../types/block'
 
 /**
  * Hook para detectar novos blocos em tempo real

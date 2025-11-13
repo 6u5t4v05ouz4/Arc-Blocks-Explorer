@@ -6,18 +6,27 @@ interface BlockCardProps {
   block: Block
   isCurrent?: boolean
   onClick?: () => void
+  openInNewTab?: boolean
 }
 
-function BlockCard({ block, isCurrent = false, onClick }: BlockCardProps) {
+function BlockCard({ block, isCurrent = false, onClick, openInNewTab = false }: BlockCardProps) {
   const gasUsageColor = block.gas_used_percentage > 80 
     ? 'text-red-400' 
     : block.gas_used_percentage > 50 
     ? 'text-yellow-400' 
     : 'text-green-400'
 
+  const handleClick = () => {
+    if (openInNewTab) {
+      window.open(`/block/${block.height}`, '_blank')
+    } else if (onClick) {
+      onClick()
+    }
+  }
+
   return (
     <div
-      onClick={onClick}
+      onClick={handleClick}
       className={`
         bg-arc-gray border rounded-lg p-4 cursor-pointer transition-all duration-300
         hover:border-arc-primary hover:shadow-lg hover:shadow-arc-primary/20 hover:scale-105
