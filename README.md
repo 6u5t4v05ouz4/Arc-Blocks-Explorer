@@ -2,6 +2,8 @@
 
 Frontend moderno para visualização de blocos da rede Arc em tempo real, similar ao mempool.space do Bitcoin.
 
+🔗 **Repositório**: [https://github.com/6u5t4v05ouz4/Arc-Blocks-Explorer](https://github.com/6u5t4v05ouz4/Arc-Blocks-Explorer)
+
 ## 🚀 Funcionalidades
 
 - **Visualização em Tempo Real**: Atualização automática a cada 2 segundos
