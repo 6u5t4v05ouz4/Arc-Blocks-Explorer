@@ -7,7 +7,6 @@ import TerminalView from './components/TerminalView'
 import ModeSelector from './components/ModeSelector'
 import BlockDetailsPage from './pages/BlockDetailsPage'
 import { BlockProvider, useBlockContext } from './contexts/BlockContext'
-import ErrorBoundary from './components/ErrorBoundary'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,37 +34,11 @@ function AppContent() {
           />
         </div>
           
-        <ErrorBoundary>
-          {viewMode === 'terminal' ? (
-            <ErrorBoundary fallback={
-              <div className="bg-arc-gray border border-red-500 rounded-lg p-8 text-center">
-                <p className="text-red-400 mb-2">Terminal mode encountered an error</p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="text-arc-primary hover:underline"
-                >
-                  Refresh page
-                </button>
-              </div>
-            }>
-              <TerminalView />
-            </ErrorBoundary>
-          ) : (
-            <ErrorBoundary fallback={
-              <div className="bg-arc-gray border border-red-500 rounded-lg p-8 text-center">
-                <p className="text-red-400 mb-2">Cards mode encountered an error</p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="text-arc-primary hover:underline"
-                >
-                  Refresh page
-                </button>
-              </div>
-            }>
-              <BlockList />
-            </ErrorBoundary>
-          )}
-        </ErrorBoundary>
+        {viewMode === 'terminal' ? (
+          <TerminalView />
+        ) : (
+          <BlockList />
+        )}
       </main>
     </div>
   )

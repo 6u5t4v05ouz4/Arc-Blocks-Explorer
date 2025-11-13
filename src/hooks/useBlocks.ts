@@ -9,7 +9,7 @@ export function useMainPageBlocks() {
   return useQuery<Block[]>({
     queryKey: ['main-page-blocks'],
     queryFn: getMainPageBlocks,
-    refetchInterval: 1000, // Tempo fixo de 1000ms como solicitado
+    refetchInterval: 800, // Intervalo rápido compatível com rede Arc
     staleTime: 500, // Cache curto para manter dados atualizados
     retry: 2,
     retryDelay: 1000,
