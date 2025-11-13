@@ -7,14 +7,23 @@ interface BlockRowProps {
   isCurrent: boolean
   isNewest: boolean
   onClick: () => void
+  openInNewTab?: boolean
 }
 
-const BlockRow = memo(function BlockRow({ block, isCurrent, isNewest, onClick }: BlockRowProps) {
-  const gasColor = block.gas_used_percentage > 80 
-    ? 'text-red-400' 
-    : block.gas_used_percentage > 50 
-    ? 'text-yellow-400' 
+const BlockRow = memo(function BlockRow({ block, isCurrent, isNewest, onClick, openInNewTab = false }: BlockRowProps) {
+  const gasColor = block.gas_used_percentage > 80
+    ? 'text-red-400'
+    : block.gas_used_percentage > 50
+    ? 'text-yellow-400'
     : 'text-green-400'
+
+  const handleClick = () => {
+    if (openInNewTab) {
+      window.open(`/block/${block.height}`, '_blank')
+    } else {
+      onClick()
+    }
+  }
 
   return (
     <div
@@ -24,7 +33,7 @@ const BlockRow = memo(function BlockRow({ block, isCurrent, isNewest, onClick }:
         ${isCurrent ? 'bg-arc-primary/10 border-l-2 border-l-arc-primary' : ''}
         ${isNewest ? 'bg-green-500/5 animate-fadeIn' : ''}
       `}
-      onClick={onClick}
+      onClick={handleClick}
     >
       <div className={`col-span-1 ${isCurrent ? 'text-arc-primary font-bold' : isNewest ? 'text-green-400 font-bold' : 'text-white'}`}>
         #{block.height}

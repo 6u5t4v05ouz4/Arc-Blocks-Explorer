@@ -138,6 +138,7 @@ export default function TerminalView() {
                     setCurrentBlockHeight(block.height)
                     setIsAutoMode(false)
                   }}
+                  openInNewTab={true}
                 />
               )
             })}

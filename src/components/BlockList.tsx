@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useMainPageBlocks, useBlockByHeight } from '../hooks/useBlocks'
 import BlockCard from './BlockCard'
 import ErrorDisplay from './ErrorDisplay'
@@ -16,9 +16,11 @@ let globalLastProcessedHeight: number | null = null
 // Event emitter para notificar quando há novos cards estáticos
 const staticCardEmitter = {
   listeners: new Set<() => void>(),
-  subscribe(callback: () => void) {
+  subscribe(callback: () => void): () => void {
     this.listeners.add(callback)
-    return () => this.listeners.delete(callback)
+    return () => {
+      this.listeners.delete(callback)
+    }
   },
   emit() {
     this.listeners.forEach(callback => callback())
@@ -31,9 +33,10 @@ function StaticCardsManager() {
 
   // Escuta por mudanças nos cards estáticos
   useEffect(() => {
-    return staticCardEmitter.subscribe(() => {
+    const unsubscribe = staticCardEmitter.subscribe(() => {
       setStaticCards([...globalStaticCards])
     })
+    return unsubscribe
   }, [])
 
   if (staticCards.length === 0) {
