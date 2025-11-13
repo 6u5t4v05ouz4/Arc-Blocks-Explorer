@@ -6,12 +6,16 @@ Frontend moderno para visualização de blocos da rede Arc em tempo real, simila
 
 ## 🚀 Funcionalidades
 
-- **Visualização em Tempo Real**: Atualização automática a cada 2 segundos
-- **Navegação de Blocos**: Visualize 3 blocos anteriores e 3 posteriores ao bloco atual
+- **Visualização em Tempo Real**: Atualização automática a cada 800ms (acompanha ~5 blocos/segundo)
+- **Modo Terminal**: Visualização rápida em formato de tabela com os últimos 15 blocos
+- **Modo Cards**: Visualização em cards (desabilitado por padrão para melhor performance)
+- **Renderização Otimizada**: Apenas novos blocos são adicionados, mantendo blocos antigos intactos
+- **Navegação de Blocos**: Visualize blocos anteriores e posteriores ao bloco atual
 - **Detalhes Completos**: Modal com informações detalhadas de cada bloco
 - **Design Moderno**: Interface escura e responsiva
 - **Busca por Altura**: Encontre blocos específicos pela altura
 - **Indicadores Visuais**: Cores e animações para diferentes estados
+- **Modo Automático**: Segue automaticamente o bloco mais recente
 
 ## 🛠️ Tecnologias
 
