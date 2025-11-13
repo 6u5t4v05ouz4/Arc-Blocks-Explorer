@@ -22,34 +22,41 @@ export default function Header() {
     <header className="bg-arc-gray border-b border-arc-gray-light">
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Arc Blocks Explorer</h1>
-            <p className="text-gray-400 text-sm">Monitoramento em tempo real da rede Arc</p>
+          <div className="flex items-center gap-4">
+            <img 
+              src="/ARC_400x400.png" 
+              alt="Arc Logo" 
+              className="w-12 h-12"
+            />
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">Arc Blocks Explorer</h1>
+              <p className="text-gray-400 text-sm">Real-time monitoring of the Arc network</p>
+            </div>
           </div>
           
           <div className="flex flex-wrap gap-4 text-sm">
             {latestBlock && (
               <div className="bg-arc-gray-light px-4 py-2 rounded-lg">
-                <div className="text-gray-400">Último Bloco</div>
+                <div className="text-gray-400">Latest Block</div>
                 <div className="text-white font-semibold">#{latestBlock.height}</div>
               </div>
             )}
             
             <div className="bg-arc-gray-light px-4 py-2 rounded-lg">
-              <div className="text-gray-400">Total de Transações</div>
-              <div className="text-white font-semibold">{totalTransactions.toLocaleString('pt-BR')}</div>
+              <div className="text-gray-400">Total Transactions</div>
+              <div className="text-white font-semibold">{totalTransactions.toLocaleString('en-US')}</div>
             </div>
             
             <div className="bg-arc-gray-light px-4 py-2 rounded-lg flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${isFetching ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`}></div>
               <span className="text-gray-400">
-                {isFetching ? 'Atualizando...' : 'Conectado'}
+                {isFetching ? 'Updating...' : 'Connected'}
               </span>
             </div>
             
             {showNewBlockAnimation && (
               <div className={`bg-green-500/20 px-4 py-2 rounded-lg transition-all duration-300 ${showNewBlockAnimation ? 'animate-pulse scale-105' : ''}`}>
-                <span className="text-green-400 font-semibold">✨ Novo bloco detectado!</span>
+                <span className="text-green-400 font-semibold">✨ New block detected!</span>
               </div>
             )}
           </div>

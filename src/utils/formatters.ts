@@ -57,13 +57,13 @@ export function formatTimestamp(timestamp: string): string {
   const diffHours = Math.floor(diffMins / 60)
   
   if (diffSecs < 60) {
-    return `${diffSecs}s atrás`
+    return `${diffSecs}s ago`
   } else if (diffMins < 60) {
-    return `${diffMins}min atrás`
+    return `${diffMins}min ago`
   } else if (diffHours < 24) {
-    return `${diffHours}h atrás`
+    return `${diffHours}h ago`
   } else {
-    return date.toLocaleString('pt-BR', {
+    return date.toLocaleString('en-US', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -77,7 +77,7 @@ export function formatTimestamp(timestamp: string): string {
  * Formata número com separadores de milhar
  */
 export function formatNumber(num: number | string): string {
-  return Number(num).toLocaleString('pt-BR')
+  return Number(num).toLocaleString('en-US')
 }
 
 /**

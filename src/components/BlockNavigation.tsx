@@ -34,14 +34,14 @@ export default function BlockNavigation({ currentHeight, onNavigate, onSearch, i
             disabled={currentHeight === null}
             className="px-4 py-2 bg-arc-gray-light hover:bg-arc-gray border border-arc-gray-light text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            ← Anterior
+            ← Previous
           </button>
           <button
             onClick={() => onNavigate('next')}
             disabled={currentHeight === null}
             className="px-4 py-2 bg-arc-gray-light hover:bg-arc-gray border border-arc-gray-light text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Próximo →
+            Next →
           </button>
         </div>
 
@@ -50,7 +50,7 @@ export default function BlockNavigation({ currentHeight, onNavigate, onSearch, i
             type="number"
             value={searchHeight}
             onChange={(e) => setSearchHeight(e.target.value)}
-            placeholder="Buscar por altura..."
+            placeholder="Search by height..."
             className="px-4 py-2 bg-arc-gray-light border border-arc-gray-light rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-arc-primary"
             min="1"
           />
@@ -58,14 +58,14 @@ export default function BlockNavigation({ currentHeight, onNavigate, onSearch, i
             type="submit"
             className="px-4 py-2 bg-arc-primary hover:bg-arc-primary-hover text-white rounded-lg transition-colors"
           >
-            Buscar
+            Search
           </button>
         </form>
 
         {currentHeight !== null && (
           <div className="flex items-center gap-2 text-sm">
             <div className="text-gray-400">
-              Bloco atual: <span className="text-white font-semibold">#{currentHeight}</span>
+              Current Block: <span className="text-white font-semibold">#{currentHeight}</span>
             </div>
             {isAutoMode && (
               <div className="flex items-center gap-1 px-2 py-1 bg-green-500/20 rounded text-green-400 text-xs">

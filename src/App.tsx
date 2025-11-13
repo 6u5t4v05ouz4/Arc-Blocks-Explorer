@@ -38,8 +38,8 @@ function AppContent() {
             // Modo Cards comentado/desabilitado para não sobrecarregar
             // <BlockList />
             <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-8 text-center">
-              <p className="text-gray-400 mb-4">Modo Cards está desabilitado para melhor performance.</p>
-              <p className="text-sm text-gray-500">Use o modo Terminal para visualização rápida e eficiente.</p>
+              <p className="text-gray-400 mb-4">Cards mode is disabled for better performance.</p>
+              <p className="text-sm text-gray-500">Use Terminal mode for fast and efficient visualization.</p>
             </div>
           )}
         </main>

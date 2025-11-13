@@ -90,7 +90,7 @@ export default function BlockList() {
           isAutoMode={isAutoMode}
         />
         <ErrorDisplay 
-          message="Erro ao carregar blocos. Verifique sua conexão e tente novamente."
+          message="Error loading blocks. Check your connection and try again."
           onRetry={() => refetchBlocks()}
         />
       </div>
@@ -125,7 +125,7 @@ export default function BlockList() {
           isAutoMode={isAutoMode}
         />
         <div className="text-center py-12">
-          <p className="text-gray-400">Nenhum bloco encontrado</p>
+          <p className="text-gray-400">No blocks found</p>
         </div>
       </div>
     )

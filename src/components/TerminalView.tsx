@@ -94,7 +94,7 @@ export default function TerminalView() {
   if (isLoadingMain && blocksList.length === 0) {
     return (
       <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-4 font-mono text-sm">
-        <div className="text-green-400">Carregando blocos...</div>
+        <div className="text-green-400">Loading blocks...</div>
       </div>
     )
   }
@@ -103,7 +103,7 @@ export default function TerminalView() {
   if (sortedBlocks.length === 0 && !isAutoMode && !manualBlocksQuery.data) {
     return (
       <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-4 font-mono text-sm">
-        <div className="text-red-400">Nenhum bloco encontrado</div>
+        <div className="text-red-400">No blocks found</div>
       </div>
     )
   }

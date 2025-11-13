@@ -32,7 +32,7 @@ export default function ModeSelector({ currentMode, onModeChange, currentBlockHe
       {currentBlockHeight !== null && currentBlockHeight !== undefined && (
         <div className="flex-1 flex justify-end">
           <div className="text-gray-400 font-mono text-sm">
-            Bloco: <span className="text-arc-primary font-bold">#{currentBlockHeight}</span>
+            Block: <span className="text-arc-primary font-bold">#{currentBlockHeight}</span>
             {isAutoMode && (
               <span className="ml-2 text-green-400">[AUTO]</span>
             )}

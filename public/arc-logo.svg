@@ -1,0 +1,76 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background gradient: dark navy to medium blue -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a1628;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2e5a8a;stop-opacity:1" />
+    </linearGradient>
+    <!-- Letter A gradient: silver-white with metallic sheen -->
+    <linearGradient id="letterGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="25%" style="stop-color:#f5f5f5;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#e8e8e8;stop-opacity:1" />
+      <stop offset="75%" style="stop-color:#d8d8d8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d0d0d0;stop-opacity:1" />
+    </linearGradient>
+    <!-- Highlight for 3D effect -->
+    <linearGradient id="highlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background with blue gradient -->
+  <rect width="64" height="64" rx="8" fill="url(#bgGradient)"/>
+  
+  <!-- Stylized Letter A - Modern, smooth, rounded design -->
+  <g transform="translate(12, 8)">
+    <!-- Top arch: broad, smooth, rounded, inverted U-shape -->
+    <path d="M 20 8 Q 10 8, 10 18 Q 10 20, 12 22" 
+          stroke="url(#letterGradient)" 
+          stroke-width="5" 
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+    
+    <path d="M 12 22 Q 20 20, 28 22" 
+          stroke="url(#letterGradient)" 
+          stroke-width="5" 
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+    
+    <path d="M 28 22 Q 30 20, 30 18 Q 30 8, 20 8" 
+          stroke="url(#letterGradient)" 
+          stroke-width="5" 
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+    
+    <!-- Left leg: thick, slightly curved vertical stroke -->
+    <path d="M 12 22 Q 10 30, 10 40" 
+          stroke="url(#letterGradient)" 
+          stroke-width="5" 
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+    
+    <!-- Right leg: thick stroke with pronounced curve, sweeping inward -->
+    <path d="M 28 22 Q 30 28, 28 34 Q 26 38, 28 40" 
+          stroke="url(#letterGradient)" 
+          stroke-width="5" 
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+    
+    <!-- Curved crossbar: distinct curved horizontal element, open design -->
+    <path d="M 26 28 Q 20 26, 14 28" 
+          stroke="url(#letterGradient)" 
+          stroke-width="4" 
+          stroke-linecap="round"
+          fill="none"/>
+    
+    <!-- Highlight for 3D/metallic effect -->
+    <path d="M 20 8 Q 10 8, 10 18 Q 10 20, 12 22 Q 20 20, 28 22 Q 30 20, 30 18 Q 30 8, 20 8" 
+          fill="url(#highlight)"
+          opacity="0.3"/>
+  </g>
+</svg>
