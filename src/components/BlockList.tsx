@@ -1,198 +1,164 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useMainPageBlocks, useBlockByHeight } from '../hooks/useBlocks'
 import BlockCard from './BlockCard'
 import ErrorDisplay from './ErrorDisplay'
 import BlockCardSkeleton from './BlockCardSkeleton'
 import type { Block } from '../types/block'
+import { getBlockByHeight } from '../services/api'
 
-const MAX_OLD_CARDS = 8 // Limite de cards antigos para performance
+const MAX_OLD_CARDS = 8
 
-export default function BlockList() {
-  const { data: mainBlocks, isLoading: isLoadingMain } = useMainPageBlocks()
+// GLOBAL STATE FOR STATIC CARDS - FORA DO CICLO DE RE-RENDER
+let globalStaticCards: { block: Block; id: string }[] = []
+let globalCardIdCounter = 0
+let globalLastProcessedHeight: number | null = null
+
+// Event emitter para notificar quando há novos cards estáticos
+const staticCardEmitter = {
+  listeners: new Set<() => void>(),
+  subscribe(callback: () => void) {
+    this.listeners.add(callback)
+    return () => this.listeners.delete(callback)
+  },
+  emit() {
+    this.listeners.forEach(callback => callback())
+  }
+}
+
+// Componente que só renderiza cards estáticos - FORA DO CICLO DO REACT QUERY
+function StaticCardsManager() {
+  const [staticCards, setStaticCards] = useState<{ block: Block; id: string }[]>(globalStaticCards)
+
+  // Escuta por mudanças nos cards estáticos
+  useEffect(() => {
+    return staticCardEmitter.subscribe(() => {
+      setStaticCards([...globalStaticCards])
+    })
+  }, [])
+
+  if (staticCards.length === 0) {
+    return (
+      <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-8 text-center">
+        <p className="text-gray-400">No previous blocks to display</p>
+        <p className="text-sm text-gray-500 mt-2">Previous blocks will appear here as new blocks are mined</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {staticCards.map(({ block, id }) => (
+        <CompletelyStaticCard key={id} initialBlock={block} />
+      ))}
+    </div>
+  )
+}
+
+// Componente 100% estático - NUNCA muda após a primeira renderização
+function CompletelyStaticCard({ initialBlock }: { initialBlock: Block }) {
+  // Estado inicial que JAMAIS muda
+  const [staticBlock] = useState(initialBlock)
+
+  return (
+    <BlockCard
+      block={staticBlock}
+      isCurrent={false}
+      openInNewTab={true}
+    />
+  )
+}
+
+// Componente APENAS para o card atual - único que participa do ciclo
+function CurrentBlockCard() {
+  const { data: mainBlocks } = useMainPageBlocks()
   const [currentBlockHeight, setCurrentBlockHeight] = useState<number | null>(null)
-  const [oldBlocksCache, setOldBlocksCache] = useState<Map<number, Block>>(new Map())
   const [isAutoMode, setIsAutoMode] = useState(true)
-  const previousBlockRef = useRef<Block | null>(null)
 
-  // Define o bloco atual quando os dados principais carregam
+  // Apenas este componente usa os hooks do React Query
+  const { data: currentBlock, isLoading, error, refetch } = useBlockByHeight(currentBlockHeight)
+
+  // Define o bloco atual
   useEffect(() => {
     if (mainBlocks && mainBlocks.length > 0) {
       const latestHeight = mainBlocks[0].height
       if (currentBlockHeight === null) {
         setCurrentBlockHeight(latestHeight)
         setIsAutoMode(true)
-      } else if (isAutoMode) {
-        if (latestHeight > currentBlockHeight) {
-          // Quando um novo bloco é detectado, salva o bloco anterior no cache
-          if (previousBlockRef.current) {
-            setOldBlocksCache(prev => {
-              const newCache = new Map(prev)
-              // Adiciona o bloco anterior ao cache
-              newCache.set(previousBlockRef.current!.height, previousBlockRef.current!)
-              
-              // Remove blocos antigos demais para manter apenas MAX_OLD_CARDS
-              if (newCache.size > MAX_OLD_CARDS) {
-                const heights = Array.from(newCache.keys()).sort((a, b) => b - a)
-                const toRemove = heights.slice(MAX_OLD_CARDS)
-                toRemove.forEach(height => newCache.delete(height))
-              }
-              
-              return newCache
-            })
-          }
-          setCurrentBlockHeight(latestHeight)
-        }
+        globalLastProcessedHeight = latestHeight
+      } else if (isAutoMode && latestHeight > currentBlockHeight) {
+        setCurrentBlockHeight(latestHeight)
       }
     }
   }, [mainBlocks, currentBlockHeight, isAutoMode])
 
-  // Busca o bloco atual
-  const { data: currentBlock, isLoading: isLoadingCurrent, error: currentError, refetch: refetchCurrent } = useBlockByHeight(
-    currentBlockHeight
-  )
-
-  // Mantém referência do bloco atual para usar quando um novo aparecer
+  // Quando o bloco atual muda, atualiza o estado GLOBAL de cards estáticos
   useEffect(() => {
-    if (currentBlock) {
-      previousBlockRef.current = currentBlock
+    if (currentBlock && globalLastProcessedHeight !== null) {
+      const currentHeight = currentBlock.height
+
+      if (currentHeight > globalLastProcessedHeight) {
+        const previousHeight = currentHeight - 1
+
+        getBlockByHeight(previousHeight)
+          .then(previousBlock => {
+            // Atualiza o estado GLOBAL - fora do ciclo React
+            const newCard = {
+              block: previousBlock,
+              id: `static-${globalCardIdCounter++}`
+            }
+            globalStaticCards = [newCard, ...globalStaticCards].slice(0, MAX_OLD_CARDS)
+            globalLastProcessedHeight = currentHeight
+
+            // Notifica todos os componentes estáticos
+            staticCardEmitter.emit()
+          })
+          .catch(err => {
+            console.log('Failed to fetch previous block:', err)
+            globalLastProcessedHeight = currentHeight
+          })
+      }
     }
   }, [currentBlock])
 
-  // Converte o cache para array ordenado (mais recente primeiro)
-  const oldBlocksArray = useMemo(() => {
-    return Array.from(oldBlocksCache.values())
-      .sort((a, b) => b.height - a.height)
-      .slice(0, MAX_OLD_CARDS)
-  }, [oldBlocksCache])
-
-  if (currentError) {
+  if (error) {
     return (
       <div className="space-y-6">
-        <ErrorDisplay 
+        <ErrorDisplay
           message="Error loading current block. Check your connection and try again."
-          onRetry={() => refetchCurrent()}
+          onRetry={() => refetch()}
         />
       </div>
     )
   }
 
-  if (isLoadingMain || (isLoadingCurrent && currentBlockHeight !== null)) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Current block skeleton */}
-          <div className="lg:col-span-1">
-            <BlockCardSkeleton />
-          </div>
-          {/* Old blocks skeleton */}
-          <div className="lg:col-span-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <BlockCardSkeleton key={i} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!currentBlock && currentBlockHeight !== null) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center py-12">
-          <p className="text-gray-400">Block #{currentBlockHeight} not found</p>
-        </div>
-      </div>
-    )
+  if (isLoading || !currentBlock) {
+    return <BlockCardSkeleton />
   }
 
   return (
+    <div>
+      <BlockCard
+        block={currentBlock}
+        isCurrent={true}
+        openInNewTab={true}
+      />
+    </div>
+  )
+}
+
+export default function BlockList() {
+  // Componente principal não faz nada - apenas estrutura
+  return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Current Block - Left Side */}
         <div className="lg:col-span-1">
-          {currentBlock && (
-            <MemoizedBlockCard
-              block={currentBlock}
-              isCurrent={true}
-              openInNewTab={true}
-            />
-          )}
+          <CurrentBlockCard />
         </div>
 
-        {/* Old Blocks - Right Side */}
         <div className="lg:col-span-2">
-          {oldBlocksArray.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {oldBlocksArray.map((block, index) => (
-                <MemoizedOldBlockCard 
-                  key={block.height} 
-                  block={block}
-                  index={index}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-8 text-center">
-              <p className="text-gray-400">No previous blocks to display</p>
-              <p className="text-sm text-gray-500 mt-2">Previous blocks will appear here as new blocks are mined</p>
-            </div>
-          )}
+          <StaticCardsManager />
         </div>
       </div>
     </div>
   )
 }
-
-// Componente memoizado para o card atual
-const MemoizedBlockCard = React.memo(function MemoizedBlockCard({ 
-  block, 
-  isCurrent, 
-  openInNewTab 
-}: { 
-  block: Block
-  isCurrent: boolean
-  openInNewTab: boolean 
-}) {
-  return (
-    <div className="animate-fadeIn">
-      <BlockCard
-        block={block}
-        isCurrent={isCurrent}
-        openInNewTab={openInNewTab}
-      />
-    </div>
-  )
-}, (prevProps, nextProps) => {
-  // Só re-renderiza se o bloco realmente mudou (altura ou hash diferente)
-  return prevProps.block.height === nextProps.block.height &&
-         prevProps.block.hash === nextProps.block.hash
-})
-
-// Componente memoizado para cards antigos - NÃO re-renderiza quando novos blocos aparecem
-const MemoizedOldBlockCard = React.memo(function MemoizedOldBlockCard({ 
-  block, 
-  index 
-}: { 
-  block: Block
-  index: number 
-}) {
-  return (
-    <div
-      className="animate-fadeIn"
-      style={{ animationDelay: `${index * 50}ms` }}
-    >
-      <BlockCard
-        block={block}
-        isCurrent={false}
-        openInNewTab={true}
-      />
-    </div>
-  )
-}, (prevProps, nextProps) => {
-  // Comparação customizada: só re-renderiza se o bloco realmente mudou
-  // Como os blocos antigos não mudam, isso sempre retorna true (não re-renderiza)
-  return prevProps.block.height === nextProps.block.height &&
-         prevProps.block.hash === nextProps.block.hash
-})

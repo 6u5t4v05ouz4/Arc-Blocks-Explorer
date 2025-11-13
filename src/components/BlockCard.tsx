@@ -28,9 +28,8 @@ function BlockCard({ block, isCurrent = false, onClick, openInNewTab = false }: 
     <div
       onClick={handleClick}
       className={`
-        bg-arc-gray border rounded-lg p-4 cursor-pointer transition-all duration-300
-        hover:border-arc-primary hover:shadow-lg hover:shadow-arc-primary/20 hover:scale-105
-        active:scale-100
+        bg-arc-gray border rounded-lg p-4 cursor-pointer
+        hover:border-arc-primary hover:shadow-lg hover:shadow-arc-primary/20
         ${isCurrent ? 'border-arc-primary shadow-lg shadow-arc-primary/30 ring-2 ring-arc-primary/50' : 'border-arc-gray-light'}
       `}
     >

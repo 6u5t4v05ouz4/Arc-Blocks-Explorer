@@ -9,7 +9,8 @@ export function useMainPageBlocks() {
   return useQuery<Block[]>({
     queryKey: ['main-page-blocks'],
     queryFn: getMainPageBlocks,
-    refetchInterval: 800, // Atualiza a cada 800ms - a rede minera ~5 blocos/segundo
+    refetchInterval: 800, // Intervalo rápido compatível com rede Arc
+    staleTime: 500, // Cache curto para manter dados atualizados
     retry: 2,
     retryDelay: 1000,
   })
