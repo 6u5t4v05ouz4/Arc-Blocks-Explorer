@@ -3,11 +3,11 @@ import { useMainPageBlocks, useBlockByHeight } from '../hooks/useBlocks'
 import { BLOCKS_TO_SHOW } from '../utils/constants'
 import type { Block } from '../types/block'
 import BlockRow from './BlockRow'
+import { useBlockContext } from '../contexts/BlockContext'
 
 export default function TerminalView() {
   const { data: mainBlocks, isLoading: isLoadingMain } = useMainPageBlocks()
-  const [currentBlockHeight, setCurrentBlockHeight] = useState<number | null>(null)
-  const [isAutoMode, setIsAutoMode] = useState(true)
+  const { currentBlockHeight, setCurrentBlockHeight, isAutoMode, setIsAutoMode } = useBlockContext()
   const [blocksList, setBlocksList] = useState<Block[]>([]) // Lista persistente de blocos
   const lastProcessedHeight = useRef<number | null>(null) // Rastreia o último bloco processado
 
@@ -85,19 +85,6 @@ export default function TerminalView() {
   // Para modo manual, busca os blocos necessários
   const manualBlocksQuery = useBlockByHeight(!isAutoMode && currentBlockHeight ? currentBlockHeight : null)
 
-  const handleNavigate = (direction: 'prev' | 'next' | 'latest') => {
-    if (direction === 'latest' && mainBlocks && mainBlocks.length > 0) {
-      setCurrentBlockHeight(mainBlocks[0].height)
-      setIsAutoMode(true)
-    } else if (direction === 'prev' && currentBlockHeight !== null) {
-      setCurrentBlockHeight(currentBlockHeight - 1)
-      setIsAutoMode(false)
-    } else if (direction === 'next' && currentBlockHeight !== null) {
-      setCurrentBlockHeight(currentBlockHeight + 1)
-      setIsAutoMode(false)
-    }
-  }
-
   const handleSearch = (height: number) => {
     setCurrentBlockHeight(height)
     setIsAutoMode(false)
@@ -123,40 +110,6 @@ export default function TerminalView() {
 
   return (
     <div className="space-y-4">
-      {/* Controles */}
-      <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-3 font-mono text-sm">
-        <div className="flex flex-wrap gap-2 items-center">
-          <button
-            onClick={() => handleNavigate('latest')}
-            className="px-3 py-1 bg-arc-primary hover:bg-arc-primary-hover text-white rounded transition-colors"
-          >
-            Latest
-          </button>
-          <button
-            onClick={() => handleNavigate('prev')}
-            disabled={currentBlockHeight === null}
-            className="px-3 py-1 bg-arc-gray-light hover:bg-arc-gray text-white rounded transition-colors disabled:opacity-50"
-          >
-            ← Prev
-          </button>
-          <button
-            onClick={() => handleNavigate('next')}
-            disabled={currentBlockHeight === null}
-            className="px-3 py-1 bg-arc-gray-light hover:bg-arc-gray text-white rounded transition-colors disabled:opacity-50"
-          >
-            Next →
-          </button>
-          <div className="flex-1"></div>
-          {currentBlockHeight !== null && (
-            <div className="text-gray-400">
-              Bloco: <span className="text-arc-primary font-bold">#{currentBlockHeight}</span>
-              {isAutoMode && (
-                <span className="ml-2 text-green-400">[AUTO]</span>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* Lista de blocos em formato terminal */}
       <div className="bg-arc-gray border border-arc-gray-light rounded-lg overflow-hidden">

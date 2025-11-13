@@ -4,6 +4,7 @@ import Header from './components/Header'
 import BlockList from './components/BlockList'
 import TerminalView from './components/TerminalView'
 import ModeSelector from './components/ModeSelector'
+import { BlockProvider, useBlockContext } from './contexts/BlockContext'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -14,17 +15,22 @@ const queryClient = new QueryClient({
   },
 })
 
-function App() {
+function AppContent() {
   const [viewMode, setViewMode] = useState<'cards' | 'terminal'>('terminal')
+  const { currentBlockHeight, isAutoMode } = useBlockContext()
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-arc-dark text-white">
-        <Header />
-        <main className="container mx-auto px-4 py-8">
-          <div className="mb-6">
-            <ModeSelector currentMode={viewMode} onModeChange={setViewMode} />
-          </div>
+    <div className="min-h-screen bg-arc-dark text-white">
+      <Header />
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <ModeSelector 
+            currentMode={viewMode} 
+            onModeChange={setViewMode}
+            currentBlockHeight={currentBlockHeight}
+            isAutoMode={isAutoMode}
+          />
+        </div>
           
           {viewMode === 'terminal' ? (
             <TerminalView />
@@ -38,6 +44,15 @@ function App() {
           )}
         </main>
       </div>
+  )
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BlockProvider>
+        <AppContent />
+      </BlockProvider>
     </QueryClientProvider>
   )
 }

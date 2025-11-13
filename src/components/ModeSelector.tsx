@@ -1,9 +1,11 @@
 interface ModeSelectorProps {
   currentMode: 'cards' | 'terminal'
   onModeChange: (mode: 'cards' | 'terminal') => void
+  currentBlockHeight?: number | null
+  isAutoMode?: boolean
 }
 
-export default function ModeSelector({ currentMode, onModeChange }: ModeSelectorProps) {
+export default function ModeSelector({ currentMode, onModeChange, currentBlockHeight, isAutoMode }: ModeSelectorProps) {
   return (
     <div className="flex gap-2 items-center bg-arc-gray border border-arc-gray-light rounded-lg p-2">
       <button
@@ -26,6 +28,17 @@ export default function ModeSelector({ currentMode, onModeChange }: ModeSelector
       >
         🎴 Cards
       </button>
+      
+      {currentBlockHeight !== null && currentBlockHeight !== undefined && (
+        <div className="flex-1 flex justify-end">
+          <div className="text-gray-400 font-mono text-sm">
+            Bloco: <span className="text-arc-primary font-bold">#{currentBlockHeight}</span>
+            {isAutoMode && (
+              <span className="ml-2 text-green-400">[AUTO]</span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
