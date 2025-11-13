@@ -31,7 +31,7 @@ const BlockRow = memo(function BlockRow({ block, isCurrent, isNewest, onClick, o
         px-4 py-2 grid grid-cols-12 gap-2 border-b border-arc-gray-light/50
         hover:bg-arc-gray-light/50 transition-colors cursor-pointer
         ${isCurrent ? 'bg-arc-primary/10 border-l-2 border-l-arc-primary' : ''}
-        ${isNewest ? 'bg-green-500/5 animate-fadeIn' : ''}
+        ${isNewest ? 'bg-green-500/5' : ''}
       `}
       onClick={handleClick}
     >
