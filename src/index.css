@@ -41,7 +41,7 @@ code {
 @keyframes slideInFromLeft {
   from {
     opacity: 0;
-    transform: translateX(-50px);
+    transform: translateX(-100px);
   }
   to {
     opacity: 1;
@@ -58,7 +58,7 @@ code {
 }
 
 .animate-slideInFromLeft {
-  animation: slideInFromLeft 0.4s ease-out;
+  animation: slideInFromLeft 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Removida animação slideToRight que causava piscagem */

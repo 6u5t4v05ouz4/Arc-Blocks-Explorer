@@ -6,7 +6,7 @@ import BlockRow from './BlockRow'
 import { useBlockContext } from '../contexts/BlockContext'
 
 export default function TerminalView() {
-  const { data: mainBlocks, isLoading: isLoadingMain } = useMainPageBlocks()
+  const { data: mainBlocks, isLoading: isLoadingMain, error: mainError } = useMainPageBlocks()
   const { currentBlockHeight, setCurrentBlockHeight, isAutoMode, setIsAutoMode } = useBlockContext()
   const [blocksList, setBlocksList] = useState<Block[]>([]) // Lista persistente de blocos
   const lastProcessedHeight = useRef<number | null>(null) // Rastreia o último bloco processado
@@ -84,6 +84,14 @@ export default function TerminalView() {
 
   // Para modo manual, busca os blocos necessários
   const manualBlocksQuery = useBlockByHeight(!isAutoMode && currentBlockHeight ? currentBlockHeight : null)
+  
+  if (mainError) {
+    return (
+      <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-4 font-mono text-sm">
+        <div className="text-red-400">Error loading blocks. Please refresh the page.</div>
+      </div>
+    )
+  }
 
   // Mostra loading apenas na primeira carga
   if (isLoadingMain && blocksList.length === 0) {
@@ -94,11 +102,45 @@ export default function TerminalView() {
     )
   }
 
-  // Se não há blocos para mostrar
-  if (sortedBlocks.length === 0 && !isAutoMode && !manualBlocksQuery.data) {
+  // Se não há blocos para mostrar - mantém a estrutura mesmo vazia
+  if (sortedBlocks.length === 0) {
+    // Se está em modo auto e não tem blocos ainda, mostra loading
+    if (isAutoMode && !mainBlocks) {
+      return (
+        <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-4 font-mono text-sm">
+          <div className="text-green-400">Loading blocks...</div>
+        </div>
+      )
+    }
+    
+    // Se está em modo manual e não tem dados
+    if (!isAutoMode && !manualBlocksQuery.data) {
+      return (
+        <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-4 font-mono text-sm">
+          <div className="text-red-400">No blocks found</div>
+        </div>
+      )
+    }
+    
+    // Fallback: mostra estrutura vazia mas visível
     return (
-      <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-4 font-mono text-sm">
-        <div className="text-red-400">No blocks found</div>
+      <div className="bg-arc-gray border border-arc-gray-light rounded-lg overflow-hidden">
+        <div className="font-mono text-xs">
+          <div className="bg-arc-gray-light border-b border-arc-gray-light px-4 py-2 grid grid-cols-12 gap-2 text-gray-400 font-semibold">
+            <div className="col-span-1">Height</div>
+            <div className="col-span-2">Hash</div>
+            <div className="col-span-2">Miner</div>
+            <div className="col-span-1">Txs</div>
+            <div className="col-span-1">Gas</div>
+            <div className="col-span-1">Size</div>
+            <div className="col-span-1">Fees</div>
+            <div className="col-span-1">Burnt</div>
+            <div className="col-span-2">Time</div>
+          </div>
+          <div className="p-4 text-center text-gray-500">
+            Waiting for blocks...
+          </div>
+        </div>
       </div>
     )
   }

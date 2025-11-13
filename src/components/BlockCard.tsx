@@ -10,9 +10,14 @@ interface BlockCardProps {
 }
 
 function BlockCard({ block, isCurrent = false, onClick, openInNewTab = false }: BlockCardProps) {
-  const gasUsageColor = block.gas_used_percentage > 80 
+  // Validação de segurança - se o bloco não tem dados essenciais, não renderiza
+  if (!block || !block.height || !block.hash) {
+    return null
+  }
+
+  const gasUsageColor = (block.gas_used_percentage ?? 0) > 80 
     ? 'text-red-400' 
-    : block.gas_used_percentage > 50 
+    : (block.gas_used_percentage ?? 0) > 50 
     ? 'text-yellow-400' 
     : 'text-green-400'
 
@@ -42,7 +47,7 @@ function BlockCard({ block, isCurrent = false, onClick, openInNewTab = false }: 
             )}
           </div>
           <div className="text-gray-400 text-xs font-mono">
-            {truncateHash(block.hash)}
+            {block.hash ? truncateHash(block.hash) : 'N/A'}
           </div>
         </div>
         <div className="text-gray-500 text-xs text-right">
@@ -54,7 +59,7 @@ function BlockCard({ block, isCurrent = false, onClick, openInNewTab = false }: 
         <div>
           <div className="text-gray-400 text-xs mb-1">Miner</div>
           <div className="text-white font-mono text-xs truncate">
-            {truncateHash(block.miner.hash)}
+            {block.miner?.hash ? truncateHash(block.miner.hash) : 'N/A'}
           </div>
         </div>
         
@@ -68,14 +73,14 @@ function BlockCard({ block, isCurrent = false, onClick, openInNewTab = false }: 
         <div>
           <div className="text-gray-400 text-xs mb-1">Gas Used</div>
           <div className={`font-semibold ${gasUsageColor}`}>
-            {formatGasPercentage(block.gas_used_percentage)}
+            {formatGasPercentage(block.gas_used_percentage ?? 0)}
           </div>
         </div>
         
         <div>
           <div className="text-gray-400 text-xs mb-1">Fees</div>
           <div className="text-white font-semibold text-xs">
-            {formatEth(weiToEth(block.transaction_fees))} ETH
+            {block.transaction_fees ? formatEth(weiToEth(block.transaction_fees)) : '0'} ETH
           </div>
         </div>
       </div>
@@ -83,10 +88,10 @@ function BlockCard({ block, isCurrent = false, onClick, openInNewTab = false }: 
       <div className="mt-3 pt-3 border-t border-arc-gray-light">
         <div className="flex justify-between items-center text-xs">
           <div className="text-gray-400">
-            Size: <span className="text-white">{formatNumber(block.size)} bytes</span>
+            Size: <span className="text-white">{block.size ? formatNumber(block.size) : '0'} bytes</span>
           </div>
           <div className="text-gray-400">
-            Burnt Fees: <span className="text-orange-400">{block.burnt_fees_percentage.toFixed(2)}%</span>
+            Burnt Fees: <span className="text-orange-400">{(block.burnt_fees_percentage ?? 0).toFixed(2)}%</span>
           </div>
         </div>
       </div>

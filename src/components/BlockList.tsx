@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useMainPageBlocks, useBlockByHeight } from '../hooks/useBlocks'
 import BlockCard from './BlockCard'
 import ErrorDisplay from './ErrorDisplay'
@@ -31,9 +31,12 @@ function StaticCardsManager() {
 
   // Escuta por mudanças nos cards estáticos
   useEffect(() => {
-    return staticCardEmitter.subscribe(() => {
+    const unsubscribe = staticCardEmitter.subscribe(() => {
       setStaticCards([...globalStaticCards])
     })
+    return () => {
+      unsubscribe()
+    }
   }, [])
 
   if (staticCards.length === 0) {
@@ -70,16 +73,28 @@ function CompletelyStaticCard({ initialBlock }: { initialBlock: Block }) {
 
 // Componente APENAS para o card atual - único que participa do ciclo
 function CurrentBlockCard() {
-  const { data: mainBlocks } = useMainPageBlocks()
+  const { data: mainBlocks, error: mainError, isLoading: isLoadingMain } = useMainPageBlocks()
   const [currentBlockHeight, setCurrentBlockHeight] = useState<number | null>(null)
   const [isAutoMode, setIsAutoMode] = useState(true)
 
   // Apenas este componente usa os hooks do React Query
   const { data: currentBlock, isLoading, error, refetch } = useBlockByHeight(currentBlockHeight)
+  
+  // Tratamento de erro da API principal
+  if (mainError) {
+    return (
+      <div className="bg-arc-gray border border-arc-gray-light rounded-lg p-4">
+        <ErrorDisplay
+          message="Error loading blocks. Please refresh the page."
+          onRetry={() => window.location.reload()}
+        />
+      </div>
+    )
+  }
 
   // Define o bloco atual
   useEffect(() => {
-    if (mainBlocks && mainBlocks.length > 0) {
+    if (mainBlocks && Array.isArray(mainBlocks) && mainBlocks.length > 0) {
       const latestHeight = mainBlocks[0].height
       if (currentBlockHeight === null) {
         setCurrentBlockHeight(latestHeight)
@@ -131,12 +146,17 @@ function CurrentBlockCard() {
     )
   }
 
+  // Se não há mainBlocks ainda, mostra loading
+  if (!mainBlocks || (isLoadingMain && currentBlockHeight === null)) {
+    return <BlockCardSkeleton />
+  }
+  
   if (isLoading || !currentBlock) {
     return <BlockCardSkeleton />
   }
 
   return (
-    <div>
+    <div key={currentBlock.height} className="animate-slideInFromLeft">
       <BlockCard
         block={currentBlock}
         isCurrent={true}
